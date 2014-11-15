@@ -1,5 +1,10 @@
 """
+This program generates a report from kernel areas that are triggered
+by an application. It prints out the lines of each source file that are
+used according the coverage info from gcov-kernel.
+
 Author: Ali Gholami
+
 """
 import sys, os, string, getopt
 
