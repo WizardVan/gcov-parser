@@ -50,21 +50,23 @@ def kernel_usage(infile, outfile):
       if ("DA:" in lines) and ("FNDA" not in lines):
         lines = lines.replace("DA:", "")
         line = lines.split(",")
-        da_values.add(line[0])
-     
+        da_values.add(int(line[0]))
+
       if "end_of_record" in lines:
-        tmp_set = usage_dict.get(tmp_path)        
+        tmp_set = usage_dict.get(tmp_path)
         if tmp_set is not None:
-          union = sorted(set().union(da_values,tmp_set))
-          usage_dict[tmp_path] = union
+          union = set().union(da_values,tmp_set)
+          usage_dict[tmp_path] = sorted(union)
         else:
           usage_dict[tmp_path]= sorted(da_values)
         da_values.clear()
 
-    for sf,da in usage_dict.items():
+    for sf,da in usage_dict.iteritems():
       outfile.write(sf+'\n')
-      for lines in da:
-        outfile.write(lines+'\n')
+      da_sorted = sorted(da)
+      for lines in da_sorted:
+        outfile.write('%d\n'%lines)
+        
       outfile.write('\n')
     
     pass
