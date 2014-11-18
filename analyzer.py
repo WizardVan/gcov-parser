@@ -14,12 +14,12 @@ def main(argv):
    try:
       opts, args = getopt.getopt(argv,"hi:o:",["ifile=","ofile="])
    except getopt.GetoptError:
-      print 'analyzer.py -i <inputfile> -o <outputfile>'
+      print 'analyzer.py -i <coverage.info> -o <outputfile>'
       sys.exit(2)
 
    for opt, arg in opts:
       if opt == '-h':
-         print 'analyzer.py -i <inputfile> -o <outputfile>'
+         print 'analyzer.py -i <coverage.info> -o <outputfile>'
          sys.exit()
       elif opt in ("-i", "--ifile"):
          inputfile = arg
@@ -37,43 +37,73 @@ def main(argv):
      sys.exit(2)
 
 """
-This function generates the lines that are used used 
-by each source file in the kernel
+This function generates the lines that are used used by each source file in the kernel.
 """
+
 def kernel_usage(infile, outfile):
     
+    """
+    A set of lines used in the SF. Each SF might be run several times
+    and therefore we need a way to make each run identical: 
+
+    SF:/usr/src/linux-3.13.0/arch/x86/include/asm/atomic.h
+    DA:38,3
+    DA:117,3
+    LF:2
+    LH:2
+
+    SF:/usr/src/linux-3.13.0/arch/x86/include/asm/atomic.h:                                                                                                              
+    DA:38,3
+    DA:40:0
+    DA 117,30
+    LF:2                                                                                                                                                                 
+    LH:2   
+
+    Result will be as follow which duplicated lines are removed:
+
+    SF:/usr/src/linux-3.13.0/arch/x86/include/asm/atomic.h                                                                                                               
+    DA:38                                                                                                                                                              
+    DA:117
+    """
+    da_values = set()
+    
+    "Create a unique mapping of SFs with the executed lines-"
+    usage_dict = {}    
+    
+    "Put the SF path in a tmp variable to test if it already exist not to be duplicated."
     tmp_path= ""
 
-    "A set of lines used in the SF"
-    da_values = set()    
-    usage_dict = {}    
-
+    "Generate the executed lines for each SF and write the unique results in an outputfile."
     for lines in infile:
-      if "SF:" in lines:
-        tmp_path= lines.rstrip(os.linesep)
+      if ("SF:" in lines):
+        tmp_path = lines.rstrip(os.linesep)
       
       if ("DA:" in lines) and ("FNDA" not in lines):
         lines = lines.replace("DA:", "")
         line = lines.split(",")
-        da_values.add(int(line[0]))
+         
+        if ("=====" not in line[1]):
+          if(int(line[1]) > 0):
+            da_values.add(int(line[0]))
 
-      if "end_of_record" in lines:
+      if ("end_of_record" in lines):
         tmp_set = usage_dict.get(tmp_path)
         if tmp_set is not None:
           union = set().union(da_values,tmp_set)
-          usage_dict[tmp_path] = sorted(union)
+          usage_dict[tmp_path] = union
         else:
-          usage_dict[tmp_path]= sorted(da_values)
+          usage_dict[tmp_path]= da_values
         da_values.clear()
 
     for sf,da in usage_dict.iteritems():
-      outfile.write(sf+'\n')
-      da_sorted = sorted(da)
-      for lines in da_sorted:
-        outfile.write('%d\n'%lines)
-        
-      outfile.write('\n')
-    
+      if(da):
+        outfile.write(sf+'\n')
+        da_sorted = sorted(da)
+        for lines in da_sorted:
+          outfile.write('%d\n'%lines)
+         
+        outfile.write('\n')
+
     pass
 
 
