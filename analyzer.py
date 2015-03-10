@@ -90,9 +90,9 @@ def kernel_usage(infile, outfile):
         tmp_set = usage_dict.get(tmp_path)
         if tmp_set is not None:
           union = set().union(da_values,tmp_set)
-          usage_dict[tmp_path] = union
+          usage_dict[tmp_path] = union.copy()
         else:
-          usage_dict[tmp_path]= da_values
+          usage_dict[tmp_path]= da_values.copy()
         da_values.clear()
 
     for sf,da in usage_dict.iteritems():
